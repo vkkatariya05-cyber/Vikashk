@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyVideoApp</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#fff;
+  color:#111;
+}
+button{
+  border:0;
+  border-radius:10px;
+  padding:12px 16px;
+  font-size:15px;
+  cursor:pointer;
+}
+input{
+  width:100%;
+  padding:13px;
+  margin:7px 0;
+  border:1px solid #ccc;
+  border-radius:9px;
+  font-size:15px;
+}
+
+/* LOGIN */
+#authPage{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:#f5f5f5;
+}
+.authBox{
+  width:100%;
+  max-width:400px;
+  background:white;
+  padding:25px;
+  border-radius:18px;
+  box-shadow:0 4px 20px #0002;
+}
+.authBox h1{
+  text-align:center;
+  margin-top:0;
+}
+.authBox p{
+  text-align:center;
+  color:#666;
+}
+.primary{
+  width:100%;
+  background:#111;
+  color:white;
+  margin-top:8px;
+}
+.google{
+  width:100%;
+  background:white;
+  border:1px solid #ccc;
+  margin-top:10px;
+}
+.switch{
+  color:#065fd4;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+/* APP */
+#app{
+  display:none;
+  padding-bottom:75px;
+}
+header{
+  height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 15px;
+  border-bottom:1px solid #eee;
+  position:sticky;
+  top:0;
+  background:white;
+  z-index:10;
+}
+.logo{
+  font-size:21px;
+  font-weight:bold;
+}
+.searchBox{
+  display:flex;
+  gap:6px;
+}
+.searchBox input{
+  margin:0;
+  width:150px;
+  padding:8px;
+}
+.page{
+  padding:15px;
+}
+.videoCard{
+  margin-bottom:20px;
+  border-bottom:1px solid #eee;
+  padding-bottom:15px;
+}
+.videoCard video{
+  width:100%;
+  background:#000;
+  border-radius:10px;
+}
+.longVideo{
+  aspect-ratio:16/9;
+  object-fit:contain;
+}
+.shortVideo{
+  width:100%;
+  height:600px;
+  object-fit:cover;
+}
+.videoTitle{
+  font-weight:bold;
+  margin:9px 0;
+}
+.actions{
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+}
+.actions button{
+  background:#f1f1f1;
+}
+.bottom{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  height:65px;
+  background:white;
+  border-top:1px solid #ddd;
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  z-index:20;
+}
+.bottom button{
+  background:none;
+  padding:8px;
+}
+.uploadBox{
+  max-width:500px;
+  margin:auto;
+  background:#f7f7f7;
+  padding:20px;
+  border-radius:15px;
+}
+.typeButtons{
+  display:flex;
+  gap:10px;
+  margin:12px 0;
+}
+.typeButtons button{
+  flex:1;
+}
+.selected{
+  background:#111 !important;
+  color:white;
+}
+.channelHead{
+  text-align:center;
+  padding:20px 0;
+}
+.avatar{
+  width:75px;
+  height:75px;
+  border-radius:50%;
+  background:#111;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:auto;
+  font-size:30px;
+}
+.commentBox{
+  display:flex;
+  gap:5px;
+  margin-top:8px;
+}
+.commentBox input{
+  margin:0;
+}
+.logout{
+  background:#e53935;
+  color:white;
+}
+.hidden{
+  display:none!important;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN / SIGNUP -->
+<div id="authPage">
+  <div class="authBox">
+
+    <h1>MyVideoApp</h1>
+    <p id="authText">अपने account से Login करें</p>
+
+    <div id="nameArea" class="hidden">
+      <input id="name" type="text" placeholder="आपका नाम">
+    </div>
+
+    <input id="email" type="email" placeholder="Gmail / Email">
+    <input id="password" type="password" placeholder="Password">
+
+    <button class="primary" onclick="emailLogin()" id="emailBtn">
+      Login
+    </button>
+
+    <button class="google" onclick="googleLogin()">
+      🔵 Continue with Google
+    </button>
+
+    <p>
+      <span id="switchText">नया account बनाना है?</span>
+      <span class="switch" onclick="toggleAuth()" id="switchBtn">
+        Sign Up
+      </span>
+    </p>
+
+    <p id="message"></p>
+
+  </div>
+</div>
+
+
+<!-- MAIN APP -->
+<div id="app">
+
+<header>
+  <div class="logo">MyVideoApp</div>
+
+  <div class="searchBox">
+    <input id="searchInput" placeholder="Search">
+    <button onclick="searchVideos()">🔍</button>
+  </div>
+</header>
+
+<main id="content"></main>
+
+<div class="bottom">
+  <button onclick="showHome()">🏠<br>Home</button>
+  <button onclick="showShorts()">▶️<br>Shorts</button>
+  <button onclick="showUpload()">➕<br>Upload</button>
+  <button onclick="showChannel()">👤<br>Channel</button>
+</div>
+
+</div>
+
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  onAuthStateChanged,
+  signOut
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+
+/* FIREBASE CONFIG */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD4xb-8fcvNU_WTarnaRyaCpQA7wkFGz8",
+  authDomain: "vikash7611-57d8b.firebaseapp.com",
+  projectId: "vikash7611-57d8b",
+  storageBucket: "vikash7611-57d8b.firebasestorage.app",
+  messagingSenderId: "175524417828",
+  appId: "1:175524417828:web:3f8da93b69fe0cdea9a3b1"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+
+
+/* VARIABLES */
+
+let signupMode = false;
+let currentUser = null;
+
+let videos = [];
+
+
+/* AUTH MODE */
+
+window.toggleAuth = function(){
+
+  signupMode = !signupMode;
+
+  document.getElementById("nameArea")
+    .classList.toggle("hidden", !signupMode);
+
+  document.getElementById("authText").innerText =
+    signupMode
+    ? "नया account बनाएं"
+    : "अपने account से Login करें";
+
+  document.getElementById("emailBtn").innerText =
+    signupMode
+    ? "Create Account"
+    : "Login";
+
+  document.getElementById("switchText").innerText =
+    signupMode
+    ? "पहले से account है?"
+    : "नया account बनाना है?";
+
+  document.getElementById("switchBtn").innerText =
+    signupMode
+    ? "Login"
+    : "Sign Up";
+
+  document.getElementById("message").innerText = "";
+};
+
+
+/* EMAIL LOGIN / SIGNUP */
+
+window.emailLogin = async function(){
+
+  const email =
+    document.getElementById("email").value.trim();
+
+  const password =
+    document.getElementById("password").value;
+
+  const name =
+    document.getElementById("name").value.trim();
+
+  if(!email || !password){
+    showMessage("Email और Password भरें");
+    return;
+  }
+
+  try{
+
+    if(signupMode){
+
+      if(!name){
+        showMessage("अपना नाम लिखें");
+        return;
+      }
+
+      const result =
+        await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+
+      await updateProfile(result.user,{
+        displayName:name
+      });
+
+      showMessage("Account बन गया!");
+
+    }else{
+
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+    }
+
+  }catch(error){
+
+    showMessage(error.message);
+
+  }
+};
+
+
+/* GOOGLE LOGIN */
+
+window.googleLogin = async function(){
+
+  try{
+
+    const provider =
+      new GoogleAuthProvider();
+
+    await signInWithPopup(
+      auth,
+      provider
+    );
+
+  }catch(error){
+
+    showMessage(error.message);
+
+  }
+};
+
+
+/* AUTH STATE */
+
+onAuthStateChanged(auth,(user)=>{
+
+  if(user){
+
+    currentUser = user;
+
+    document.getElementById("authPage")
+      .style.display = "none";
+
+    document.getElementById("app")
+      .style.display = "block";
+
+    showHome();
+
+  }else{
+
+    currentUser = null;
+
+    document.getElementById("authPage")
+      .style.display = "flex";
+
+    document.getElementById("app")
+      .style.display = "none";
+
+  }
+
+});
+
+
+function showMessage(text){
+
+  document.getElementById("message")
+    .innerText = text;
+
+}
+
+
+/* HOME */
+
+window.showHome = function(){
+
+  let html = `
+    <div class="page">
+      <h2>Home</h2>
+  `;
+
+  const longVideos =
+    videos.filter(v=>v.type==="long");
+
+  if(longVideos.length===0){
+
+    html += `
+      <p>अभी कोई Long Video upload नहीं हुई है।</p>
+    `;
+
+  }else{
+
+    longVideos.forEach(v=>{
+      html += videoCard(v,false);
+    });
+
+  }
+
+  html += `</div>`;
+
+  document.getElementById("content").innerHTML = html;
+};
+
+
+/* SHORTS */
+
+window.showShorts = function(){
+
+  let html = `
+    <div class="page">
+      <h2>Shorts</h2>
+  `;
+
+  const shorts =
+    videos.filter(v=>v.type==="short");
+
+  if(shorts.length===0){
+
+    html += `
+      <p>अभी कोई Short upload नहीं हुआ है।</p>
+    `;
+
+  }else{
+
+    shorts.forEach(v=>{
+      html += videoCard(v,true);
+    });
+
+  }
+
+  html += `</div>`;
+
+  document.getElementById("content").innerHTML = html;
+};
+
+
+/* VIDEO CARD */
+
+function videoCard(v,isShort){
+
+  return `
+    <div class="videoCard">
+
+      <video
+        class="${isShort ? "shortVideo" : "longVideo"}"
+        src="${v.url}"
+        controls
+      ></video>
+
+      <div class="videoTitle">
+        ${escapeHTML(v.title)}
+      </div>
+
+      <div class="actions">
+
+        <button onclick="likeVideo('${v.id}')">
+          👍 Like ${v.likes || 0}
+        </button>
+
+        <button onclick="shareVideo('${v.id}')">
+          ↗ Share
+        </button>
+
+        <button onclick="subscribeChannel('${v.channel}')">
+          Subscribe
+        </button>
+
+      </div>
+
+      <div class="commentBox">
+        <input
+          id="comment-${v.id}"
+          placeholder="Comment..."
+        >
+        <button onclick="commentVideo('${v.id}')">
+          Send
+        </button>
+      </div>
+
+      <div id="comments-${v.id}"></div>
+
+    </div>
+  `;
+}
+
+
+/* UPLOAD */
+
+window.showUpload = function(){
+
+  document.getElementById("content").innerHTML = `
+
+    <div class="page">
+
+      <div class="uploadBox">
+
+        <h2>Upload Video</h2>
+
+        <p>Video का type चुनें:</p>
+
+        <div class="typeButtons">
+
+          <button id="longBtn"
+            class="selected"
+            onclick="selectType('long')">
+            📺 Long<br>16:9
+          </button>
+
+          <button id="shortBtn"
+            onclick="selectType('short')">
+            📱 Short<br>9:16
+          </button>
+
+        </div>
+
+        <input
+          id="videoTitle"
+          placeholder="Video का title"
+        >
+
+        <input
+          id="videoFile"
+          type="file"
+          accept="video/*"
+        >
+
+        <button
+          class="primary"
+          onclick="uploadLocalVideo()">
+          Upload
+        </button>
+
+        <p id="uploadMessage"></p>
+
+      </div>
+
+    </div>
+  `;
+
+};
+
+
+/* SELECT VIDEO TYPE */
+
+let selectedType = "long";
+
+window.selectType = function(type){
+
+  selectedType = type;
+
+  document.getElementById("longBtn")
+    .classList.toggle(
+      "selected",
+      type==="long"
+    );
+
+  document.getElementById("shortBtn")
+    .classList.toggle(
+      "selected",
+      type==="short"
+    );
+
+};
+
+
+/* LOCAL UPLOAD FOR TESTING */
+
+window.uploadLocalVideo = function(){
+
+  const file =
+    document.getElementById("videoFile").files[0];
+
+  const title =
+    document.getElementById("videoTitle").value.trim();
+
+  if(!file){
+
+    document.getElementById("uploadMessage")
+      .innerText = "पहले video चुनें";
+
+    return;
+  }
+
+  if(!title){
+
+    document.getElementById("uploadMessage")
+      .innerText = "Video का title लिखें";
+
+    return;
+  }
+
+  const url =
+    URL.createObjectURL(file);
+
+  videos.unshift({
+
+    id:Date.now().toString(),
+
+    title:title,
+
+    url:url,
+
+    type:selectedType,
+
+    channel:
+      currentUser?.displayName ||
+      currentUser?.email ||
+      "My Channel",
+
+    likes:0
+
+  });
+
+  document.getElementById("uploadMessage")
+    .innerText =
+    "Video upload हो गई!";
+
+};
+
+
+/* CHANNEL */
+
+window.showChannel = function(){
+
+  const name =
+    currentUser?.displayName ||
+    currentUser?.email ||
+    "My Channel";
+
+  let html = `
+
+    <div class="page">
+
+      <div class="channelHead">
+
+        <div class="avatar">
+          ${name.charAt(0).toUpperCase()}
+        </div>
+
+        <h2>${escapeHTML(name)}</h2>
+
+        <p>My Channel</p>
+
+        <button class="logout"
+          onclick="logout()">
+          Logout
+        </button>
+
+      </div>
+
+      <h3>मेरी Videos</h3>
+  `;
+
+  const myVideos =
+    videos.filter(v=>
+      v.channel === name
+    );
+
+  if(myVideos.length===0){
+
+    html += `
+      <p>आपने अभी कोई video upload नहीं की है।</p>
+    `;
+
+  }else{
+
+    myVideos.forEach(v=>{
+      html += videoCard(
+        v,
+        v.type==="short"
+      );
+    });
+
+  }
+
+  html += `</div>`;
+
+  document.getElementById("content").innerHTML = html;
+};
+
+
+/* LIKE */
+
+window.likeVideo = function(id){
+
+  const video =
+    videos.find(v=>v.id===id);
+
+  if(video){
+
+    video.likes =
+      (video.likes || 0) + 1;
+
+    showHome();
+
+  }
+
+};
+
+
+/* COMMENT */
+
+window.commentVideo = function(id){
+
+  const input =
+    document.getElementById(
+      "comment-"+id
+    );
+
+  if(!input || !input.value.trim())
+    return;
+
+  const box =
+    document.getElementById(
+      "comments-"+id
+    );
+
+  box.innerHTML += `
+    <p>💬 ${escapeHTML(input.value)}</p>
+  `;
+
+  input.value = "";
+
+};
+
+
+/* SHARE */
+
+window.shareVideo = async function(id){
+
+  const video =
+    videos.find(v=>v.id===id);
+
+  if(!video) return;
+
+  if(navigator.share){
+
+    await navigator.share({
+
+      title:video.title,
+
+      text:"MyVideoApp पर यह video देखें"
+
+    });
+
+  }else{
+
+    alert("Share option इस browser में उपलब्ध नहीं है।");
+
+  }
+
+};
+
+
+/* SUBSCRIBE */
+
+window.subscribeChannel = function(channel){
+
+  alert(
+    channel +
+    " को Subscribe कर दिया गया!"
+  );
+
+};
+
+
+/* SEARCH */
+
+window.searchVideos = function(){
+
+  const q =
+    document.getElementById("searchInput")
+    .value
+    .toLowerCase()
+    .trim();
+
+  let results =
+    videos.filter(v=>
+      v.title.toLowerCase().includes(q)
+    );
+
+  let html = `
+    <div class="page">
+      <h2>Search Results</h2>
+  `;
+
+  if(results.length===0){
+
+    html += `<p>कोई video नहीं मिली।</p>`;
+
+  }else{
+
+    results.forEach(v=>{
+      html += videoCard(
+        v,
+        v.type==="short"
+      );
+    });
+
+  }
+
+  html += `</div>`;
+
+  document.getElementById("content")
+    .innerHTML = html;
+
+};
+
+
+/* LOGOUT */
+
+window.logout = async function(){
+
+  await signOut(auth);
+
+};
+
+
+/* SAFE TEXT */
+
+function escapeHTML(text){
+
+  return String(text)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+
+}
+
+</script>
+
+</body>
+</html>
